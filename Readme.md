@@ -26,5 +26,7 @@ Please note that micor-ros2 agent can not detect pre-running node in the micro-c
 3. Check connection
     ```bash
         ros2 node list
+        # /micro_ros_platformio_node
         ros2 topic list
+        # /micro_ros_platformio_node_publisher
     ```
