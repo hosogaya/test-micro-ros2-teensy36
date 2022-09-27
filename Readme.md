@@ -11,7 +11,9 @@ board_microros_transport = serial # transportation
 ```
 
 ## Run Micro-ROS2 Agent and Upload 
-1. Run MIcro-ROS2 agent in docker
+Please note that micor-ros2 agent can not detect pre-running node in the micro-computer. So you should launch micro-ros2 agent first, then, upload your project to the micro-computer.
+
+1. Run Micro-ROS2 agent in docker
     ```bash
     # Serial micro-ROS Agent
     docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO serial --dev [YOUR BOARD PORT] -v6
