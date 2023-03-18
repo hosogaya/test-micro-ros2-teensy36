@@ -40,7 +40,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 
 void setup() {
 	// Configure serial transport
-	Serial.begin(230400);
+	Serial.begin(921600);
 	set_microros_serial_transports(Serial);
 	delay(2000);
 
@@ -60,7 +60,7 @@ void setup() {
 		"micro_ros_platformio_node_publisher"));
 
 	// create timer,
-	const unsigned int timer_timeout = 1000;
+	const unsigned int timer_timeout = 10;
 	RCCHECK(rclc_timer_init_default(
 		&timer,
 		&support,
