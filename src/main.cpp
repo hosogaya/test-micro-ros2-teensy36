@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 
+// https://forum.pjrc.com/threads/71420-Undefined-reference-to-_write?mode=hybrid
 extern "C" {
 __attribute__((weak))
 int _write(int file, char *ptr, int len)
