@@ -1,6 +1,11 @@
 # Using Micro-ROS2 with teensy36
 
-# How to use
+# To Do
+* 通信速度のチェック
+    * baudrate=921600でトピックの送受信が可能
+
+
+# How to usea
 ## Set up platformio.ini
 ```ini
 # install micro-ros2
