@@ -152,15 +152,14 @@ void setup() {
 	RCCHECK(rclc_node_init_default(&node, "micro_ros_platformio_node", "", &support));
 
 	// create publisher
-	// RCCHECK(rclc_publisher_init_best_effort(
-	RCCHECK(rclc_publisher_init_default(
+	RCCHECK(rclc_publisher_init_best_effort(
 		&publisher,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
 		// ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
 		"micro_ros_platformio_node_publisher"));
 
-	RCCHECK(rclc_publisher_init_default(
+	RCCHECK(rclc_publisher_init_best_effort(
 		&time_publisher,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
@@ -174,7 +173,7 @@ void setup() {
 		RCL_MS_TO_NS(timer_timeout),
 		timer_callback));
 	
-	RCCHECK(rclc_subscription_init_default(
+	RCCHECK(rclc_subscription_init_best_effort(
 		&subscriber, 
 		&node, 
 		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
