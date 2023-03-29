@@ -1,49 +1,106 @@
 # Using Micro-ROS2 with teensy36
 
-# To Do
-* 通信速度のチェック
-    * baudrate=921600でトピックの送受信が可能
+# Requirements
+* Ubuntu 20.04
+* ROS2 galactic
+* micro-ROS
+* teensy3.6
+* git 
 
-
-# How to usea
-## Set up platformio.ini
-```ini
-# install micro-ros2
-lib_deps =
-    https://github.com/micro-ROS/micro_ros_platformio
-board_microros_distro = galactic # ros2 version
-board_microros_transport = serial # transportation
-```
-
-## Run Micro-ROS2 Agent and Upload 
-Please note that micor-ros2 agent can not detect pre-running node in the micro-computer. So you should launch micro-ros2 agent first, then, upload your project to the micro-computer.
-
-1. Run Micro-ROS2 agent in docker
-    ```bash
-    # Serial micro-ROS Agent
-    docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO serial --dev /dev/ttyACM0 -v6
-    ```
-
-2. Upload project
-    ```bash
-    pio run --target upload
-    ```
-3. Check connection
-    ```bash
-        ros2 node list
-        # /micro_ros_platformio_node
-        ros2 topic list
-        # /micro_ros_platformio_node_publisher
-    ```
-
-# Install ros2 galactic
-https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html
-```
-sudo apt update && sudo apt install curl
+# Install ROS2
+* [Installation guide for ROS2 galactic](https://docs.ros.org/en/galactic/Installation.html)
+```bash
+sudo apt install software-properties-common
+sudo add-apt-repository universe
+sudo apt update && sudo apt install curl -y 
 sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-sudo apt update
+sudo apt update && sudo apt upgrade -y
 sudo apt install ros-galactic-desktop
 ```
+
+# Install micro-ros2
+https://micro.ros.org/docs/tutorials/core/first_application_linux/
+
+
+## Install Ros2 and the micro-ROS build system
+```bash
+# Source the ROS 2 installation
+source /opt/ros/$ROS_DISTRO/setup.bash
+
+# Create a workspace and download the micro-ROS tools
+mkdir microros_ws
+cd microros_ws
+git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
+
+# Update dependencies using rosdep
+sudo apt update && rosdep update
+rosdep install --from-paths src --ignore-src -y
+
+# Install pip
+sudo apt-get install python3-pip
+
+# Build micro-ROS tools and source them
+colcon build
+source install/local_setup.bash
+```
+
+## Build Ros2 agent
+```bash
+# Create firmware step
+ros2 run micro_ros_setup create_firmware_ws.sh host
+# Build step
+ros2 run micro_ros_setup build_firmware.sh
+source install/local_setup.bash
+# Download micro-ROS-Agent packages
+ros2 run micro_ros_setup create_agent_ws.sh
+# Build step
+ros2 run micro_ros_setup build_agent.sh
+source install/local_setup.bash
+```
+
+# Install PlatformIO for VScode
+## Install VScode 
+* Please download vscode corresponding to your OS from [here](https://code.visualstudio.com/download)
+
+## Install Extensions
+* C/C++ Extension Pack (ms-vscode.cpptools-extension-pack)
+* ROS (ms-iot.vscode-ros)
+* PlatformIO IDE (platformio.platformio-ide)
+
+# Run micro-ROS-agent 
+1. Upload this PlatformIO project to teensy36. 
+2. Launch micro_ros_agent
+```bash
+cd <Path-to-your-microros_ws>
+source /opt/ros/$ROS_DISTRO/setup.bash
+source install/local_setup.bash
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+```
+Please change `ttyACM0` to suit your environment. 
+
+## Tests of pub-sub communication with node working on desktop PC
+* Baudrate: 921600
+* QoS: Best Effort
+* MessageType: 'Flaot32MultiArray'
+    * Dimension: 2
+    * Size: 3 $\times$ 18 or 6 $\times$ 18
+1. Build executable for tests.
+```bash
+cd <Path-to-this-project>/ros2_ws
+colcon build
+source install/setup.bash
+```
+2. Launch publisher
+```bash
+ros2 run test_float32_multi_array test_float32_multi_array_pub
+```
+Then, data published to `/micro_ros_platformio_node_publisher` are incrimented.
+
+3. Launch subscriber 
+```bash
+ros2 run test_float32_multi_array test_float32_multi_array_sub
+```
+Then, the logger will show an datum at the end of the array. 
 
 # Install Docker
 
@@ -79,4 +136,10 @@ sudo systemctl status docker
 sudo usermod -aG docker ${USER}
 su - ${USER}
 reboot
+```
+
+## Run micro-ROS-agent in docker 
+```bash
+# Serial micro-ROS Agent
+docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO serial --dev /dev/ttyACM0 -v6
 ```
