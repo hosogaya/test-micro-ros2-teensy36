@@ -1,0 +1,3 @@
+[submodule "lib/DxlCtl"]
+	path = lib/DxlCtl
+	url = git@github.com:hosogaya/DxlCtl.git
