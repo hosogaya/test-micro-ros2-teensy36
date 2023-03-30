@@ -19,6 +19,7 @@
 #include <memory>
 
 #include <motor_control.h>
+#include <PINs.h>
 #include <TeensyThreads.h>
 
 // https://forum.pjrc.com/threads/71420-Undefined-reference-to-_write?mode=hybrid
@@ -68,6 +69,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 	if (timer != NULL) {
 		unsigned int s = micros();
 		motor_control::readJointState(angles, vels, curs, errs);
+		// motor_control::test_readJointState(angles, vels, curs, errs);
 		size_t n = 0;
 		for (size_t i=0; i<angles.size(); ++i, ++n) sending_msg.data.data[n] = angles[i];
 		for (size_t i=0; i<vels.size(); ++i, ++n) sending_msg.data.data[n] = vels[i];
@@ -76,7 +78,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 
 		RCSOFTCHECK(rcl_publish(&publisher, &sending_msg, NULL));
 		// sending_msg.data++;
-		time_msg.data = micros() - s;
+		time_msg.data = n;
 		RCSOFTCHECK(rcl_publish(&time_publisher, &time_msg, NULL));
 	}
 	// delete sending_msg.layout.dim.data;
@@ -100,34 +102,7 @@ void spin() {
 	}
 }
 
-void setup() {
-	sending_msg.layout.data_offset = 0;
-	sending_msg.layout.dim.capacity = 2;
-	sending_msg.layout.dim.size = 2;
-	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[2];
-
-	size_t ROW = 3, COLUMN=18;
-	sending_msg.layout.dim.data[0].label.data = "RadVelCurErr";
-	sending_msg.layout.dim.data[0].label.size = 12;
-	sending_msg.layout.dim.data[0].label.capacity = 12;
-	sending_msg.layout.dim.data[0].size = ROW;
-	sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
-
-	sending_msg.layout.dim.data[1].label.data = "i*3+j";
-	sending_msg.layout.dim.data[1].label.size = 5;
-	sending_msg.layout.dim.data[1].label.capacity = 5;
-	sending_msg.layout.dim.data[1].size = COLUMN;
-	sending_msg.layout.dim.data[1].stride = COLUMN;
-
-	sending_msg.data.size = 54;
-	sending_msg.data.capacity = 54;
-	sending_msg.data.data = new float[54];
-	for (size_t i=0; i<ROW; ++i)
-		for (size_t j=0; j<COLUMN; ++j)
-			sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
-
-	motor_control::setup(false);
-
+void setup_ros() {
 	// https://micro.ros.org/docs/tutorials/advanced/handling_type_memory/
 	conf.max_string_capacity = 54;
 	conf.max_basic_type_sequence_capacity = 108;
@@ -138,9 +113,6 @@ void setup() {
 		conf 
 	);
 
-	// Configure serial transport
-	Serial.begin(921600);
-	// Serial.println("Hello world");
 	set_microros_serial_transports(Serial);
 	threads.delay(2000);
 
@@ -189,9 +161,51 @@ void setup() {
 	RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &received_msg, &subscription_callback, ON_NEW_DATA));
 
 	threads.addThread(spin, 0, 4096);
+}
+
+void setup() {
+    setupPins();
+
+	sending_msg.layout.data_offset = 0;
+	sending_msg.layout.dim.capacity = 2;
+	sending_msg.layout.dim.size = 2;
+	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[2];
+
+	size_t ROW = 4, COLUMN=18;
+	sending_msg.layout.dim.data[0].label.data = "RadVelCurErr";
+	sending_msg.layout.dim.data[0].label.size = 12;
+	sending_msg.layout.dim.data[0].label.capacity = 12;
+	sending_msg.layout.dim.data[0].size = ROW;
+	sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
+
+	sending_msg.layout.dim.data[1].label.data = "i*3+j";
+	sending_msg.layout.dim.data[1].label.size = 5;
+	sending_msg.layout.dim.data[1].label.capacity = 5;
+	sending_msg.layout.dim.data[1].size = COLUMN;
+	sending_msg.layout.dim.data[1].stride = COLUMN;
+
+	sending_msg.data.size = ROW*COLUMN;
+	sending_msg.data.capacity = ROW*COLUMN;
+	sending_msg.data.data = new float[ROW*COLUMN];
+	for (size_t i=0; i<ROW; ++i)
+		for (size_t j=0; j<COLUMN; ++j)
+			sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
+
+	motor_control::setup(true);
+	// motor_control::test_setup();
+
+	// Configure serial transport
+	Serial.begin(921600);
+	// Serial.println("Hello world");
+
+	motor_control::printStatus();
+	// setup_ros();
+	// motor_control::test_start();
 	motor_control::start();
 }
 
 void loop() {
-	
+	threads.setSliceMicros(100);
+	threads.delay(500);
+	motor_control::printMotorStates();
 }
