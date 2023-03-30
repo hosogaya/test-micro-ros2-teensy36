@@ -18,6 +18,9 @@
 #include <vector>
 #include <memory>
 
+#include <motor_control.h>
+#include <TeensyThreads.h>
+
 // https://forum.pjrc.com/threads/71420-Undefined-reference-to-_write?mode=hybrid
 extern "C" {
 __attribute__((weak))
@@ -58,10 +61,19 @@ void error_loop() {
     }
 }
 
+
+std::array<float, 18> angles, vels, curs, errs;
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 	RCLC_UNUSED(last_call_time);
 	if (timer != NULL) {
 		unsigned int s = micros();
+		motor_control::readJointState(angles, vels, curs, errs);
+		size_t n = 0;
+		for (size_t i=0; i<angles.size(); ++i, ++n) sending_msg.data.data[n] = angles[i];
+		for (size_t i=0; i<vels.size(); ++i, ++n) sending_msg.data.data[n] = vels[i];
+		for (size_t i=0; i<curs.size(); ++i, ++n) sending_msg.data.data[n] = curs[i];
+		for (size_t i=0; i<errs.size(); ++i, ++n) sending_msg.data.data[n] = errs[i];
+
 		RCSOFTCHECK(rcl_publish(&publisher, &sending_msg, NULL));
 		// sending_msg.data++;
 		time_msg.data = micros() - s;
@@ -75,31 +87,17 @@ void subscription_callback(const void* msgin) {
 	// test_msg.data++;
 
 	const std_msgs__msg__Float32MultiArray* received_msg = (const std_msgs__msg__Float32MultiArray *)msgin;
-	sending_msg.data = received_msg->data;
-	sending_msg.layout = received_msg->layout;
+	// sending_msg.data = received_msg->data;
+	// sending_msg.layout = received_msg->layout;
+}
 
-	// delete sending_msg.layout.dim.data;
-	// delete sending_msg.data.data;
-	// sending_msg.layout.data_offset = received_msg->layout.data_offset;
-	// sending_msg.layout.dim.capacity = received_msg->layout.dim.capacity;
-	// sending_msg.layout.dim.size = received_msg->layout.dim.size;
-	// sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[received_msg->layout.dim.size];
-	// for (size_t i=0; i<sending_msg.layout.dim.size; ++i) {
-	// 	sending_msg.layout.dim.data[i].size = received_msg->layout.dim.data[i].size;
-	// 	sending_msg.layout.dim.data[i].stride = received_msg->layout.dim.data[i].stride;
-	// 	sending_msg.layout.dim.data[i].label.capacity = received_msg->layout.dim.data[i].label.capacity;
-	// 	sending_msg.layout.dim.data[i].label.size = received_msg->layout.dim.data[i].label.size;
-	// 	sending_msg.layout.dim.data[i].label.data = new char[received_msg->layout.dim.data[i].label.size];
-	// 	for (size_t j=0; j<received_msg->layout.dim.data[i].size; ++j) {
-	// 		sending_msg.layout.dim.data[i].label.data[j] = received_msg->layout.dim.data[i].label.data[j];
-	// 	}
-	// }
-	// sending_msg.data.size = received_msg->data.size;
-	// sending_msg.data.capacity = received_msg->data.capacity;
-	// sending_msg.data.data = new float[sending_msg.data.size];
-	// for (size_t i=0; i<sending_msg.data.size; ++i) {
-	// 	sending_msg.data.data[i] = received_msg->data.data[i];
-	// }
+void spin() {
+	threads.setSliceMicros(10);
+	while (1) {
+		size_t t = millis();
+		RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)));
+		while (millis() - t < 10) threads.yield();
+	}
 }
 
 void setup() {
@@ -109,15 +107,15 @@ void setup() {
 	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[2];
 
 	size_t ROW = 3, COLUMN=18;
-	sending_msg.layout.dim.data[0].label.data = "row";
-	sending_msg.layout.dim.data[0].label.size = 3;
-	sending_msg.layout.dim.data[0].label.capacity = 10;
+	sending_msg.layout.dim.data[0].label.data = "RadVelCurErr";
+	sending_msg.layout.dim.data[0].label.size = 12;
+	sending_msg.layout.dim.data[0].label.capacity = 12;
 	sending_msg.layout.dim.data[0].size = ROW;
 	sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
 
-	sending_msg.layout.dim.data[1].label.data = "column";
-	sending_msg.layout.dim.data[1].label.size = 6;
-	sending_msg.layout.dim.data[1].label.capacity = 10;
+	sending_msg.layout.dim.data[1].label.data = "i*3+j";
+	sending_msg.layout.dim.data[1].label.size = 5;
+	sending_msg.layout.dim.data[1].label.capacity = 5;
 	sending_msg.layout.dim.data[1].size = COLUMN;
 	sending_msg.layout.dim.data[1].stride = COLUMN;
 
@@ -127,6 +125,8 @@ void setup() {
 	for (size_t i=0; i<ROW; ++i)
 		for (size_t j=0; j<COLUMN; ++j)
 			sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
+
+	motor_control::setup(false);
 
 	// https://micro.ros.org/docs/tutorials/advanced/handling_type_memory/
 	conf.max_string_capacity = 54;
@@ -140,8 +140,9 @@ void setup() {
 
 	// Configure serial transport
 	Serial.begin(921600);
+	// Serial.println("Hello world");
 	set_microros_serial_transports(Serial);
-	delay(2000);
+	threads.delay(2000);
 
 	allocator = rcl_get_default_allocator();
 
@@ -180,16 +181,17 @@ void setup() {
 		// ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
 		"micro_ros_platformio_node_subscriber"
 	));
-	
 
 	// create executor
 	// number_of_handle_sizeの数だけタイマーやサブスクライバーを登録することができる
 	RCCHECK(rclc_executor_init(&executor, &support.context, 10, &allocator)); 
 	RCCHECK(rclc_executor_add_timer(&executor, &timer));
 	RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &received_msg, &subscription_callback, ON_NEW_DATA));
+
+	threads.addThread(spin, 0, 4096);
+	motor_control::start();
 }
 
 void loop() {
-	// delay(100);
-	RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)));
+	
 }
