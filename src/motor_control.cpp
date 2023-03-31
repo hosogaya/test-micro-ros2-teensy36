@@ -33,23 +33,29 @@ void setup(const bool _torque) {
 void readMotorStates3() {
     threads.setSliceMicros(50);
     size_t t = millis();
+    size_t t_read = micros();
+    size_t t_write = micros();
+    size_t prev_instruction_time = micros();
     while (1) {
         t = millis();
+        motors_in_serial3.instruction_period = micros() - prev_instruction_time;
+        prev_instruction_time = micros();
         {
+            t_read = micros();
             Threads::Scope scope(mx_read3);
             if (!motors_in_serial3.readData()) {
-                Serial.println("Serial3: Failed to read data");
-                threads.delay(500);
+                // Serial.println("Serial3: Failed to read data");
+                // threads.delay(500);
             }
-            else {
-                Serial.println("Serial3: Success to read data");
-                threads.delay(500);
-            }
+            motors_in_serial3.read_time = micros() - t_read;
         }
-        // {
-        //     Threads::Scope scope(mx_write3);
-        //     motors_in_serial3.writeData();
-        // }
+        {
+            t_write = micros();
+            Threads::Scope scope(mx_write3);
+            motors_in_serial3.writeData();
+            motors_in_serial3.write_time = micros() - t_write;
+        }
+    
         while (millis() - t < 10) threads.yield();
     }
 }
@@ -57,27 +63,46 @@ void readMotorStates3() {
 void readMotorStates4() {
     threads.setSliceMicros(50);
     size_t t = millis();
+    size_t t_read = micros();
+    size_t t_write = micros();
+    size_t prev_instruction_time = micros();
     while (1) {
         t = millis();
+        motors_in_serial4.instruction_period = micros() - prev_instruction_time;
+        prev_instruction_time = micros();
         {
+            t_read = micros();
             Threads::Scope scope(mx_read4);
             if (!motors_in_serial4.readData()) {
-                Serial.println("Serial4: Failed to read data");
-                threads.delay(500);
+                // Serial.println("Serial4: Failed to read data");
+                // threads.delay(500);
             };
+            motors_in_serial4.read_time = micros() - t_read;
         }
-        // {
-        //     Threads::Scope scope(mx_write4);
-        //     motors_in_serial4.writeData();
-        // }
+        {
+            t_write = micros();
+            Threads::Scope scope(mx_write4);
+            motors_in_serial4.writeData();
+            motors_in_serial4.write_time = micros() - t_write;
+        }
         while (millis() - t < 10) threads.yield();
     }
+}
+
+void readTimes(std::array<size_t, 6>& times) {
+    times[0] = motors_in_serial3.read_time;
+    times[1] = motors_in_serial3.write_time;
+    times[2] = motors_in_serial3.instruction_period;
+    //
+    times[3] = motors_in_serial4.read_time;
+    times[4] = motors_in_serial4.write_time;
+    times[5] = motors_in_serial4.instruction_period;
 }
 
 // start threads
 void start() {
     threads.addThread(readMotorStates3, 0, 4096);
-    // threads.addThread(readMotorStates4, 0, 4096);
+    threads.addThread(readMotorStates4, 0, 9192);
 }
 
 void setInputs(const std::array<float, 18>& _inputs) {
@@ -140,6 +165,8 @@ void Motors::setup(const bool _torque) {
     syncWriteVelocityIgain(3840);
 
     if (_torque) syncEnableTorque();
+    input_vels_.resize(id_.size());
+    for (size_t i=0; i<input_vels_.size(); ++i) input_vels_[i]=0.0f;
 }
 
 bool Motors::readData() {
@@ -190,6 +217,12 @@ void Motors::printMotorStates() const {
     for (size_t i=0; i<errs_.size(); ++i) {
         Serial.print(this->errs_[i]); Serial.print(" "); 
     }
+    Serial.println();
+    //
+    Serial.print("Time: ");
+    Serial.print(this->read_time); Serial.print(" "); 
+    Serial.print(this->write_time); Serial.print(" "); 
+    Serial.print(this->instruction_period); Serial.print(" "); 
     Serial.println();
     //
 }

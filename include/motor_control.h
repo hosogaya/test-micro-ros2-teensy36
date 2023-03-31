@@ -10,6 +10,7 @@ class Motors : public DxlCtl {
         std::vector<float> vels_;
         std::vector<float> curs_;
         std::vector<uint8_t> errs_;
+
         //
     public:
         Motors(const uint8_t _pin = 0);
@@ -20,7 +21,10 @@ class Motors : public DxlCtl {
         const std::vector<float>& getVels() const {return vels_;}
         const std::vector<float>& getCurs() const {return curs_;}
         const std::vector<uint8_t>& getErrs() const {return errs_;}
+
         std::vector<float> input_vels_;
+        size_t read_time, write_time, instruction_period;
+
         void printStatus() const;
         void printMotorStates() const;
 };
@@ -32,6 +36,7 @@ void start();
 void setInputs(const std::array<float, 18>& _inputs);
 void readJointState(std::array<float, 18>& _angles, std::array<float,18>& _vels, 
     std::array<float,18>& _curs, std::array<float, 18>& _errs);
+void readTimes(std::array<size_t, 6>& times);
 
 void printStatus();
 void printMotorStates();

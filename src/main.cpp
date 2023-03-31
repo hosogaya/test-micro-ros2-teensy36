@@ -64,6 +64,7 @@ void error_loop() {
 
 
 std::array<float, 18> angles, vels, curs, errs;
+std::array<size_t, 6> motor_times;
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 	RCLC_UNUSED(last_call_time);
 	if (timer != NULL) {
@@ -75,6 +76,9 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 		for (size_t i=0; i<vels.size(); ++i, ++n) sending_msg.data.data[n] = vels[i];
 		for (size_t i=0; i<curs.size(); ++i, ++n) sending_msg.data.data[n] = curs[i];
 		for (size_t i=0; i<errs.size(); ++i, ++n) sending_msg.data.data[n] = errs[i];
+		motor_control::readTimes(motor_times);
+		for (size_t i=0; i<motor_times.size(); ++i, ++n) 
+			sending_msg.data.data[n] = motor_times[i]; 
 
 		RCSOFTCHECK(rcl_publish(&publisher, &sending_msg, NULL));
 		// sending_msg.data++;
@@ -167,11 +171,11 @@ void setup() {
     setupPins();
 
 	sending_msg.layout.data_offset = 0;
-	sending_msg.layout.dim.capacity = 2;
-	sending_msg.layout.dim.size = 2;
-	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[2];
+	sending_msg.layout.dim.capacity = 3;
+	sending_msg.layout.dim.size = 3;
+	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[3];
 
-	size_t ROW = 4, COLUMN=18;
+	size_t ROW = 4, COLUMN=18, TIME=6;
 	sending_msg.layout.dim.data[0].label.data = "RadVelCurErr";
 	sending_msg.layout.dim.data[0].label.size = 12;
 	sending_msg.layout.dim.data[0].label.capacity = 12;
@@ -184,12 +188,19 @@ void setup() {
 	sending_msg.layout.dim.data[1].size = COLUMN;
 	sending_msg.layout.dim.data[1].stride = COLUMN;
 
-	sending_msg.data.size = ROW*COLUMN;
-	sending_msg.data.capacity = ROW*COLUMN;
-	sending_msg.data.data = new float[ROW*COLUMN];
+	sending_msg.layout.dim.data[2].label.data = "time";
+	sending_msg.layout.dim.data[2].label.size = 4;
+	sending_msg.layout.dim.data[2].label.capacity = 4;
+	sending_msg.layout.dim.data[2].size = TIME;
+	sending_msg.layout.dim.data[2].stride = TIME;
+
+	sending_msg.data.size = ROW*COLUMN+TIME;
+	sending_msg.data.capacity = ROW*COLUMN+TIME;
+	sending_msg.data.data = new float[ROW*COLUMN+TIME];
 	for (size_t i=0; i<ROW; ++i)
 		for (size_t j=0; j<COLUMN; ++j)
 			sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
+	for (size_t i=0; i<TIME; ++i) sending_msg.data.data[ROW*COLUMN+i] = 0;
 
 	motor_control::setup(true);
 	// motor_control::test_setup();
@@ -198,8 +209,8 @@ void setup() {
 	Serial.begin(921600);
 	// Serial.println("Hello world");
 
-	motor_control::printStatus();
-	// setup_ros();
+	// motor_control::printStatus();
+	setup_ros();
 	// motor_control::test_start();
 	motor_control::start();
 }
@@ -207,5 +218,5 @@ void setup() {
 void loop() {
 	threads.setSliceMicros(100);
 	threads.delay(500);
-	motor_control::printMotorStates();
+	// motor_control::printMotorStates();
 }
