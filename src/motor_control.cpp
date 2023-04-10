@@ -164,7 +164,12 @@ void Motors::setup(const bool _torque) {
     syncWriteVelocityPgain(400);
     syncWriteVelocityIgain(3840);
 
-    if (_torque) syncEnableTorque();
+
+    if (_torque) {
+        if (!syncEnableTorque()) {
+            Serial.println("Failed to enable torque");
+        }
+    }
     input_vels_.resize(id_.size());
     for (size_t i=0; i<input_vels_.size(); ++i) input_vels_[i]=0.0f;
 }

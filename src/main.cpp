@@ -4,7 +4,7 @@
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
-#include <micro_ros_utilities/type_utilities.h>
+// #include <micro_ros_utilities/type_utilities.h>
 
 #include <std_msgs/msg/int32.h>
 #include <std_msgs/msg/int32_multi_array.h>
@@ -32,11 +32,7 @@ int _write(int file, char *ptr, int len)
 }
 }
 
-static micro_ros_utilities_memory_conf_t conf = {0};
-
-std::string row = "row";
-std::string col = "column";
-
+// static micro_ros_utilities_memory_conf_t conf = {0};
 rcl_subscription_t subscriber;
 rcl_publisher_t publisher;
 rcl_publisher_t time_publisher;
@@ -99,7 +95,14 @@ void subscription_callback(const void* msgin) {
 
 void spin() {
 	threads.setSliceMicros(10);
+	size_t time = millis();
+	bool led = false;
 	while (1) {
+		if (millis() - time > 1e3) {
+			led = !led;
+			digitalWrite(ORANGE_LED, led);
+			time = millis();
+		}
 		size_t t = millis();
 		RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)));
 		while (millis() - t < 10) threads.yield();
@@ -108,14 +111,14 @@ void spin() {
 
 void setup_ros() {
 	// https://micro.ros.org/docs/tutorials/advanced/handling_type_memory/
-	conf.max_string_capacity = 54;
-	conf.max_basic_type_sequence_capacity = 108;
-	conf.max_ros2_type_sequence_capacity = 108;
-	bool success = micro_ros_utilities_create_message_memory(
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
-		&received_msg,
-		conf 
-	);
+	// conf.max_string_capacity = 54;
+	// conf.max_basic_type_sequence_capacity = 108;
+	// conf.max_ros2_type_sequence_capacity = 108;
+	// bool success = micro_ros_utilities_create_message_memory(
+	// 	ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
+	// 	&received_msg,
+	// 	conf 
+	// );
 
 	set_microros_serial_transports(Serial);
 	threads.delay(2000);
@@ -170,49 +173,54 @@ void setup_ros() {
 void setup() {
     setupPins();
 
-	sending_msg.layout.data_offset = 0;
-	sending_msg.layout.dim.capacity = 3;
-	sending_msg.layout.dim.size = 3;
-	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[3];
+	// sending_msg.layout.data_offset = 0;
+	// sending_msg.layout.dim.capacity = 3;
+	// sending_msg.layout.dim.size = 3;
+	// sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[3];
 
-	size_t ROW = 4, COLUMN=18, TIME=6;
-	sending_msg.layout.dim.data[0].label.data = "RadVelCurErr";
-	sending_msg.layout.dim.data[0].label.size = 12;
-	sending_msg.layout.dim.data[0].label.capacity = 12;
-	sending_msg.layout.dim.data[0].size = ROW;
-	sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
+	// size_t ROW = 4, COLUMN=18, TIME=6;
+	// sending_msg.layout.dim.data[0].label.data = new char[12];
+	// strcpy(sending_msg.layout.dim.data[0].label.data, "RadVelCurErr");
+	// sending_msg.layout.dim.data[0].label.size = 12;
+	// sending_msg.layout.dim.data[0].label.capacity = 12;
+	// sending_msg.layout.dim.data[0].size = ROW;
+	// sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
 
-	sending_msg.layout.dim.data[1].label.data = "i*3+j";
-	sending_msg.layout.dim.data[1].label.size = 5;
-	sending_msg.layout.dim.data[1].label.capacity = 5;
-	sending_msg.layout.dim.data[1].size = COLUMN;
-	sending_msg.layout.dim.data[1].stride = COLUMN;
+	// sending_msg.layout.dim.data[1].label.data = new char[5];
+	// strcpy(sending_msg.layout.dim.data[1].label.data, "i*3+j");
+	// sending_msg.layout.dim.data[1].label.size = 5;
+	// sending_msg.layout.dim.data[1].label.capacity = 5;
+	// sending_msg.layout.dim.data[1].size = COLUMN;
+	// sending_msg.layout.dim.data[1].stride = COLUMN;
 
-	sending_msg.layout.dim.data[2].label.data = "time";
-	sending_msg.layout.dim.data[2].label.size = 4;
-	sending_msg.layout.dim.data[2].label.capacity = 4;
-	sending_msg.layout.dim.data[2].size = TIME;
-	sending_msg.layout.dim.data[2].stride = TIME;
+	// sending_msg.layout.dim.data[2].label.data = new char[4];
+	// strcpy(sending_msg.layout.dim.data[2].label.data, "time");
+	// sending_msg.layout.dim.data[2].label.size = 4;
+	// sending_msg.layout.dim.data[2].label.capacity = 4;
+	// sending_msg.layout.dim.data[2].size = TIME;
+	// sending_msg.layout.dim.data[2].stride = TIME;
 
-	sending_msg.data.size = ROW*COLUMN+TIME;
-	sending_msg.data.capacity = ROW*COLUMN+TIME;
-	sending_msg.data.data = new float[ROW*COLUMN+TIME];
-	for (size_t i=0; i<ROW; ++i)
-		for (size_t j=0; j<COLUMN; ++j)
-			sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
-	for (size_t i=0; i<TIME; ++i) sending_msg.data.data[ROW*COLUMN+i] = 0;
+	// sending_msg.data.size = ROW*COLUMN+TIME;
+	// sending_msg.data.capacity = ROW*COLUMN+TIME;
+	// sending_msg.data.data = new float[ROW*COLUMN+TIME];
+	// for (size_t i=0; i<ROW; ++i)
+	// 	for (size_t j=0; j<COLUMN; ++j)
+	// 		sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
+	// for (size_t i=0; i<TIME; ++i) sending_msg.data.data[ROW*COLUMN+i] = 0;
+
+
+	// Configure serial transport
+	Serial.begin(921600);
+	// Serial.begin(115200);
+	// Serial.println("Hello world");
 
 	motor_control::setup(true);
 	// motor_control::test_setup();
 
-	// Configure serial transport
-	Serial.begin(921600);
-	// Serial.println("Hello world");
-
 	// motor_control::printStatus();
 	setup_ros();
 	// motor_control::test_start();
-	motor_control::start();
+	// motor_control::start();
 }
 
 void loop() {
