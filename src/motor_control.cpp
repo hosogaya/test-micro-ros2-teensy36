@@ -152,7 +152,7 @@ void readJointState(std::array<float, 18>& _angles, std::array<float,18>& _vels,
     }
 }
 
-Motors::Motors(const uint8_t _pin = 0) : DxlCtl(_pin) {}
+Motors::Motors(const uint8_t _pin) : DxlCtl(_pin) {}
 
 void Motors::setup(const bool _torque) {
     addIndirectData(DxlCtl::Reg::HardwareErrorStatus, 1);

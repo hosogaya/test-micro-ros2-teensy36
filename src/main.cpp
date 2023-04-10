@@ -64,7 +64,6 @@ std::array<size_t, 6> motor_times;
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
 	RCLC_UNUSED(last_call_time);
 	if (timer != NULL) {
-		unsigned int s = micros();
 		motor_control::readJointState(angles, vels, curs, errs);
 		// motor_control::test_readJointState(angles, vels, curs, errs);
 		size_t n = 0;
