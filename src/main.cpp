@@ -173,40 +173,40 @@ void setup_ros() {
 void setup() {
     setupPins();
 
-	// sending_msg.layout.data_offset = 0;
-	// sending_msg.layout.dim.capacity = 3;
-	// sending_msg.layout.dim.size = 3;
-	// sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[3];
+	sending_msg.layout.data_offset = 0;
+	sending_msg.layout.dim.capacity = 3;
+	sending_msg.layout.dim.size = 3;
+	sending_msg.layout.dim.data = new std_msgs__msg__MultiArrayDimension[3];
 
-	// size_t ROW = 4, COLUMN=18, TIME=6;
-	// sending_msg.layout.dim.data[0].label.data = new char[12];
-	// strcpy(sending_msg.layout.dim.data[0].label.data, "RadVelCurErr");
-	// sending_msg.layout.dim.data[0].label.size = 12;
-	// sending_msg.layout.dim.data[0].label.capacity = 12;
-	// sending_msg.layout.dim.data[0].size = ROW;
-	// sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
+	size_t ROW = 4, COLUMN=18, TIME=6;
+	sending_msg.layout.dim.data[0].label.data = new char[12];
+	strcpy(sending_msg.layout.dim.data[0].label.data, "RadVelCurErr");
+	sending_msg.layout.dim.data[0].label.size = 12;
+	sending_msg.layout.dim.data[0].label.capacity = 12;
+	sending_msg.layout.dim.data[0].size = ROW;
+	sending_msg.layout.dim.data[0].stride = ROW*COLUMN;
 
-	// sending_msg.layout.dim.data[1].label.data = new char[5];
-	// strcpy(sending_msg.layout.dim.data[1].label.data, "i*3+j");
-	// sending_msg.layout.dim.data[1].label.size = 5;
-	// sending_msg.layout.dim.data[1].label.capacity = 5;
-	// sending_msg.layout.dim.data[1].size = COLUMN;
-	// sending_msg.layout.dim.data[1].stride = COLUMN;
+	sending_msg.layout.dim.data[1].label.data = new char[5];
+	strcpy(sending_msg.layout.dim.data[1].label.data, "i*3+j");
+	sending_msg.layout.dim.data[1].label.size = 5;
+	sending_msg.layout.dim.data[1].label.capacity = 5;
+	sending_msg.layout.dim.data[1].size = COLUMN;
+	sending_msg.layout.dim.data[1].stride = COLUMN;
 
-	// sending_msg.layout.dim.data[2].label.data = new char[4];
-	// strcpy(sending_msg.layout.dim.data[2].label.data, "time");
-	// sending_msg.layout.dim.data[2].label.size = 4;
-	// sending_msg.layout.dim.data[2].label.capacity = 4;
-	// sending_msg.layout.dim.data[2].size = TIME;
-	// sending_msg.layout.dim.data[2].stride = TIME;
+	sending_msg.layout.dim.data[2].label.data = new char[4];
+	strcpy(sending_msg.layout.dim.data[2].label.data, "time");
+	sending_msg.layout.dim.data[2].label.size = 4;
+	sending_msg.layout.dim.data[2].label.capacity = 4;
+	sending_msg.layout.dim.data[2].size = TIME;
+	sending_msg.layout.dim.data[2].stride = TIME;
 
-	// sending_msg.data.size = ROW*COLUMN+TIME;
-	// sending_msg.data.capacity = ROW*COLUMN+TIME;
-	// sending_msg.data.data = new float[ROW*COLUMN+TIME];
-	// for (size_t i=0; i<ROW; ++i)
-	// 	for (size_t j=0; j<COLUMN; ++j)
-	// 		sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
-	// for (size_t i=0; i<TIME; ++i) sending_msg.data.data[ROW*COLUMN+i] = 0;
+	sending_msg.data.size = ROW*COLUMN+TIME;
+	sending_msg.data.capacity = ROW*COLUMN+TIME;
+	sending_msg.data.data = new float[ROW*COLUMN+TIME];
+	for (size_t i=0; i<ROW; ++i)
+		for (size_t j=0; j<COLUMN; ++j)
+			sending_msg.data.data[i*COLUMN+j] = i*COLUMN+j;
+	for (size_t i=0; i<TIME; ++i) sending_msg.data.data[ROW*COLUMN+i] = 0;
 
 
 	// Configure serial transport
@@ -220,11 +220,12 @@ void setup() {
 	// motor_control::printStatus();
 	setup_ros();
 	// motor_control::test_start();
-	// motor_control::start();
+	motor_control::start();
 }
 
 void loop() {
 	threads.setSliceMicros(100);
 	threads.delay(500);
+	
 	// motor_control::printMotorStates();
 }
