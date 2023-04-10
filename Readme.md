@@ -2,20 +2,20 @@
 
 # Requirements
 * Ubuntu 20.04
-* ROS2 galactic
+* ROS2 foxy
 * micro-ROS
 * teensy3.6
 * git 
 
-# Install ROS2
-* [Installation guide for ROS2 galactic](https://docs.ros.org/en/galactic/Installation.html)
+# Install ROS2 foxy
+* [Installation guide for ROS2 foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
 ```bash
 sudo apt install software-properties-common
 sudo add-apt-repository universe
 sudo apt update && sudo apt install curl -y 
 sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 sudo apt update && sudo apt upgrade -y
-sudo apt install ros-galactic-desktop
+sudo apt install ros-foxy-desktop python3-argcomplete
 ```
 
 # Install micro-ros2
