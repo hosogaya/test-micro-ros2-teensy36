@@ -4,3 +4,6 @@
 [submodule "lib/vl6180x-arduino"]
 	path = lib/vl6180x-arduino
 	url = git@github.com:pololu/vl6180x-arduino.git
+[submodule "lib/imu-jy901"]
+	path = lib/imu-jy901
+	url = git@github.com:hosogaya/imu-jy901.git
