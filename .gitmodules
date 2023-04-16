@@ -1,3 +1,6 @@
 [submodule "lib/DxlCtl"]
 	path = lib/DxlCtl
 	url = git@github.com:hosogaya/DxlCtl.git
+[submodule "lib/vl6180x-arduino"]
+	path = lib/vl6180x-arduino
+	url = git@github.com:pololu/vl6180x-arduino.git
