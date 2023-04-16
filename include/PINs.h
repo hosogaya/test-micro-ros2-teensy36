@@ -42,7 +42,7 @@
 #define SDA2 4
 
 
-void setupPins() {
+inline void setupPins() {
 	pinMode(CONVERTER_SWITCH, OUTPUT); // Switch of level converter for m-> (3.3V <-> 5V) High:ON, Low: OFF
     pinMode(RELAY_VOLTAGE, INPUT_PULLUP); // voltage of relay switch (High:ON, Low;OFF) 
     pinMode(RELAY_SWITCH, OUTPUT); // Switch of relay (Low: ON, High: OFF)
